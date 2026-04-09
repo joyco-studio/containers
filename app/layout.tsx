@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { publicSans, robotoMono } from "@/lib/fonts"
 import "./globals.css";
@@ -19,7 +20,9 @@ export default function RootLayout({
       className={`${publicSans.variable} ${robotoMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <Suspense fallback={null}>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </Suspense>
       </body>
     </html>
   );
