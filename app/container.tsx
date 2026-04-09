@@ -2,14 +2,13 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
-  useState,
   type ComponentPropsWithoutRef,
-  type Dispatch,
   type ReactNode,
-  type SetStateAction,
 } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import clsx from "clsx";
 
 export const VARIANTS = [
@@ -21,6 +20,11 @@ export const VARIANTS = [
 
 export type ContainerVariant = (typeof VARIANTS)[number]["id"];
 
+const VARIANT_IDS = VARIANTS.map((v) => v.id) as [
+  ContainerVariant,
+  ...ContainerVariant[],
+];
+
 // ---------------------------------------------------------------------------
 // <Container> — outer wrapper. Applies the chosen container-* utility class
 // and, for the sidebar variant, slots in an <aside> as the first grid child.
@@ -30,7 +34,7 @@ export type ContainerVariant = (typeof VARIANTS)[number]["id"];
 
 type ContainerContextValue = {
   variant: ContainerVariant;
-  setVariant: Dispatch<SetStateAction<ContainerVariant>>;
+  setVariant: (v: ContainerVariant) => void;
 };
 
 const ContainerContext = createContext<ContainerContextValue | null>(null);
@@ -42,8 +46,19 @@ export function ContainerProvider({
   children: ReactNode;
   initialVariant?: ContainerVariant;
 }) {
-  const [variant, setVariant] = useState<ContainerVariant>(initialVariant);
-  const value = useMemo(() => ({ variant, setVariant }), [variant]);
+  const [variant, setVariantQuery] = useQueryState(
+    "variant",
+    parseAsStringLiteral(VARIANT_IDS)
+      .withDefault(initialVariant)
+      .withOptions({ history: "replace", shallow: true }),
+  );
+  const setVariant = useCallback(
+    (v: ContainerVariant) => {
+      void setVariantQuery(v);
+    },
+    [setVariantQuery],
+  );
+  const value = useMemo(() => ({ variant, setVariant }), [variant, setVariant]);
   return (
     <ContainerContext.Provider value={value}>
       {children}
