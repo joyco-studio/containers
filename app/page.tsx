@@ -1,11 +1,58 @@
 "use client";
 
+import { useState } from "react";
 import {
   Container,
   ContainerProvider,
   VARIANTS,
   useContainer,
+  type ContainerVariant,
 } from "./container";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+
+const VARIANT_EXAMPLES: Record<
+  ContainerVariant,
+  { description: string; sites: { name: string; url: string; note: string }[] }
+> = {
+  "container-constrained": {
+    description:
+      "A single max-width column centered on the page. The classic content container.",
+    sites: [
+      {
+        name: "Tailwind CSS",
+        url: "https://tailwindcss.com/",
+        note: "Marketing site uses a capped max-width column with responsive horizontal padding.",
+      },
+      {
+        name: "Vercel",
+        url: "https://vercel.com/home",
+        note: "Homepage sections sit inside a constrained centered container.",
+      },
+    ],
+  },
+  "container-critical-breakpoint": {
+    description:
+      "Stays narrow until a critical breakpoint, then jumps to a wider layout.",
+    sites: [
+      { name: "Example", url: "https://example.com", note: "Replace with a real reference." },
+    ],
+  },
+  "container-grid": {
+    description:
+      "A 12-column grid container that lets children opt into specific column spans.",
+    sites: [
+      { name: "Example", url: "https://example.com", note: "Replace with a real reference." },
+    ],
+  },
+};
 
 export default function Home() {
   return (
@@ -123,25 +170,82 @@ export default function Home() {
 
 function VariantPicker() {
   const { variant, setVariant } = useContainer();
+  const [openInfo, setOpenInfo] = useState<ContainerVariant | null>(null);
   return (
     <>
       <span className="mr-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
         Container
       </span>
-      {VARIANTS.map((v) => (
-        <button
-          key={v.id}
-          type="button"
-          onClick={() => setVariant(v.id)}
-          className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-            variant === v.id
-              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black"
-              : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-          }`}
-        >
-          {v.label}
-        </button>
-      ))}
+      {VARIANTS.map((v) => {
+        const active = variant === v.id;
+        return (
+          <ButtonGroup key={v.id}>
+            <Button
+              type="button"
+              size="sm"
+              variant={active ? "default" : "outline"}
+              onClick={() => setVariant(v.id)}
+            >
+              {v.label}
+            </Button>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant={active ? "default" : "outline"}
+              aria-label={`About ${v.label}`}
+              onClick={() => setOpenInfo(v.id)}
+            >
+              i
+            </Button>
+          </ButtonGroup>
+        );
+      })}
+      {VARIANTS.map((v) => {
+        const info = VARIANT_EXAMPLES[v.id];
+        return (
+          <Sheet
+            key={v.id}
+            open={openInfo === v.id}
+            onOpenChange={(o) => setOpenInfo(o ? v.id : null)}
+          >
+            <SheetContent className="w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>{v.label}</SheetTitle>
+              </SheetHeader>
+              <div className="px-4 pb-6 space-y-6">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  {info.description}
+                </p>
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    Examples in the wild
+                  </div>
+                  <ul className="space-y-3">
+                    {info.sites.map((s) => (
+                      <li
+                        key={s.url}
+                        className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                      >
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium underline"
+                        >
+                          {s.name}
+                        </a>
+                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          {s.note}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        );
+      })}
       <code className="ml-auto rounded bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-900">
         className=&quot;{variant}&quot;
       </code>
@@ -153,19 +257,15 @@ function HeroCopy() {
   return (
     <div>
       <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-        One class. Every Tailwind container variant.
+        Every container variant.
       </h1>
       <p className="mt-4 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
         Pick a container above to see how a typical page layout behaves under
         each option from the Tailwind Plus containers gallery.
       </p>
       <div className="mt-6 flex gap-3">
-        <button className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-black">
-          Get started
-        </button>
-        <button className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium dark:border-zinc-700">
-          Learn more
-        </button>
+        <Button size="lg">Get started</Button>
+        <Button size="lg" variant="outline">Learn more</Button>
       </div>
     </div>
   );
