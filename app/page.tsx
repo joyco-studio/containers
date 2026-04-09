@@ -11,7 +11,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -36,6 +35,11 @@ const VARIANT_EXAMPLES: Record<
         url: "https://vercel.com/home",
         note: "Homepage sections sit inside a constrained centered container.",
       },
+      {
+        name: "Shopify Design",
+        url: "https://shopify.design/",
+        note: "Editorial layout centered in a fixed max-width column.",
+      },
     ],
   },
   "container-critical-breakpoint": {
@@ -52,6 +56,17 @@ const VARIANT_EXAMPLES: Record<
       { name: "Example", url: "https://example.com", note: "Replace with a real reference." },
     ],
   },
+  "container-responsive": {
+    description:
+      "Fluid side padding derived from a 12-column grid. Padding scales with viewport width and caps at 1920px.",
+    sites: [
+      {
+        name: "Sazabi",
+        url: "https://sazabi.com",
+        note: "Side margins flex with viewport width using grid-derived padding.",
+      },
+    ],
+  },
 };
 
 export default function Home() {
@@ -60,9 +75,7 @@ export default function Home() {
       <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-100">
         {/* Sticky picker */}
         <div className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-black/80">
-          <Container variant="container-constrained" className="flex flex-wrap items-center gap-2 py-3">
-            <VariantPicker />
-          </Container>
+          <VariantPicker />
         </div>
 
         {/* Header */}
@@ -172,84 +185,80 @@ function VariantPicker() {
   const { variant, setVariant } = useContainer();
   const [openInfo, setOpenInfo] = useState<ContainerVariant | null>(null);
   return (
-    <>
-      <span className="mr-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
-        Container
-      </span>
-      {VARIANTS.map((v) => {
-        const active = variant === v.id;
-        return (
-          <ButtonGroup key={v.id}>
-            <Button
-              type="button"
-              size="sm"
-              variant={active ? "default" : "outline"}
-              onClick={() => setVariant(v.id)}
+    <div className="py-3 overflow-x-auto px-4">
+      <div className="flex justify-center items-center gap-2 w-full min-w-max">
+        {VARIANTS.map((v) => {
+          const active = variant === v.id;
+          return (
+            <ButtonGroup key={v.id}>
+              <Button
+                type="button"
+                size="sm"
+                variant={active ? "default" : "outline"}
+                onClick={() => setVariant(v.id)}
+              >
+                {v.label}
+              </Button>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant={active ? "default" : "outline"}
+                aria-label={`About ${v.label}`}
+                onClick={() => setOpenInfo(v.id)}
+              >
+                i
+              </Button>
+            </ButtonGroup>
+          );
+        })}
+        {VARIANTS.map((v) => {
+          const info = VARIANT_EXAMPLES[v.id];
+          return (
+            <Sheet
+              key={v.id}
+              open={openInfo === v.id}
+              onOpenChange={(o) => setOpenInfo(o ? v.id : null)}
             >
-              {v.label}
-            </Button>
-            <Button
-              type="button"
-              size="icon-sm"
-              variant={active ? "default" : "outline"}
-              aria-label={`About ${v.label}`}
-              onClick={() => setOpenInfo(v.id)}
-            >
-              i
-            </Button>
-          </ButtonGroup>
-        );
-      })}
-      {VARIANTS.map((v) => {
-        const info = VARIANT_EXAMPLES[v.id];
-        return (
-          <Sheet
-            key={v.id}
-            open={openInfo === v.id}
-            onOpenChange={(o) => setOpenInfo(o ? v.id : null)}
-          >
-            <SheetContent className="w-full sm:max-w-md">
-              <SheetHeader>
-                <SheetTitle>{v.label}</SheetTitle>
-              </SheetHeader>
-              <div className="px-4 pb-6 space-y-6">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {info.description}
-                </p>
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    Examples in the wild
-                  </div>
-                  <ul className="space-y-3">
-                    {info.sites.map((s) => (
-                      <li
-                        key={s.url}
-                        className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                      >
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm font-medium underline"
+              <SheetContent className="w-full sm:max-w-md">
+                <SheetHeader>
+                  <SheetTitle>{v.label}</SheetTitle>
+                </SheetHeader>
+                <div className="px-4 pb-6 space-y-6">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {info.description}
+                  </p>
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Examples in the wild
+                    </div>
+                    <ul className="space-y-3">
+                      {info.sites.map((s) => (
+                        <li
+                          key={s.url}
+                          className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
                         >
-                          {s.name}
-                        </a>
-                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                          {s.note}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-medium underline"
+                          >
+                            {s.name}
+                          </a>
+                          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                            {s.note}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        );
-      })}
-      <code className="ml-auto rounded bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-900">
-        className=&quot;{variant}&quot;
-      </code>
-    </>
+              </SheetContent>
+            </Sheet>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

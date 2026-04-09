@@ -15,7 +15,8 @@ import clsx from "clsx";
 export const VARIANTS = [
   { id: "container-constrained", label: "Max Width" },
   { id: "container-critical-breakpoint", label: "Critical Breakpoint" },
-  { id: "container-grid", label: "Grid (12-col)" },
+  { id: "container-grid", label: "Grid" },
+  { id: "container-responsive", label: "Emulated Grid" },
 ] as const;
 
 export type ContainerVariant = (typeof VARIANTS)[number]["id"];
