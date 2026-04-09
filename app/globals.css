@@ -63,8 +63,6 @@
 }
 
 :root {
-  --sides: 1rem;
-  --grid-gap: 1.5rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(0.97 0 0);
@@ -97,6 +95,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --sides: 1rem;
+  --grid-gap: 1.5rem;
+  --text-scale: 1;
+
+  @media (width >= theme(screens.sm)) {
+    --sides: 1.5rem;
+  }
+
+  @media (width >= theme(screens.lg)) {
+    --sides: 2rem;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -110,18 +120,17 @@
   width: 100%;
   margin-inline: auto;
   max-width: 80rem; /* max-w-7xl */
-  padding-inline: 1rem;
+  padding-inline: var(--sides);
   @media (width >= 640px) { padding-inline: 1.5rem; }
   @media (width >= 1024px) { padding-inline: 2rem; }
 }
 
 @utility container-critical-breakpoint {
-  padding-inline: 1rem;
+  padding-inline: var(--sides);
   margin-inline: auto;
 
   @media (width >= theme(screens.sm)) {
     max-width: theme(screens.sm);
-    padding-inline: 1.5rem;
   }
 
   @media (width >= theme(screens.md)) {
@@ -130,7 +139,6 @@
 
   @media (width >= theme(screens.lg)) {
     max-width: theme(screens.lg);
-    padding-inline: 2rem;
   }
 
   @media (width >= theme(screens.xl)) {
@@ -144,15 +152,15 @@
   margin-inline: auto;
   padding-inline: var(--sides);
 
-  @media (width >= 768px) {
+  @media (width >= theme(screens.md)) {
     padding-inline: calc((min(100%, 1920px) + var(--grid-gap)) / 9);
   }
 
-  @media (width >= 1280px) {
+  @media (width >= theme(screens.xl)) {
     padding-inline: calc((min(100%, 1920px) + var(--grid-gap)) / 9);
   }
 
-  @media (width >= 1536px) {
+  @media (width >= theme(screens.2xl)) {
     padding-inline: calc((100% + var(--grid-gap)) / 9);
   }
 
@@ -170,18 +178,71 @@
 /* 6. Constrained grid — capped width, responsive 12-col grid for children */
 @utility container-grid {
   width: 100%;
-  padding-inline: 1rem;
+  padding-inline: var(--sides);
   display: grid;
   gap: 1.5rem;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  @media (width >= 640px) {
+  @media (width >= theme(screens.md)) {
     padding-inline: 1.5rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
   }
-  @media (width >= 1024px) {
+  @media (width >= theme(screens.lg)) {
+    padding-inline: 2rem;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  @media (width >= theme(screens.2xl)) {
     padding-inline: 2rem;
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Dynamic text utilities — text-d-{size}
+ * Font-size scales with --text-scale (default 1). When the picker is in
+ * "all" mode it writes html.font-size and leaves --text-scale at 1, so rem
+ * carries the scaling. When in "text only" mode it keeps html at 16px and
+ * writes --text-scale, so only these utilities respond.
+ * ------------------------------------------------------------------------- */
+
+@utility text-d-xs {
+  font-size: calc(0.75rem * var(--text-scale));
+  line-height: calc(1rem * var(--text-scale));
+}
+@utility text-d-sm {
+  font-size: calc(0.875rem * var(--text-scale));
+  line-height: calc(1.25rem * var(--text-scale));
+}
+@utility text-d-base {
+  font-size: calc(1rem * var(--text-scale));
+  line-height: calc(1.5rem * var(--text-scale));
+}
+@utility text-d-lg {
+  font-size: calc(1.125rem * var(--text-scale));
+  line-height: calc(1.75rem * var(--text-scale));
+}
+@utility text-d-xl {
+  font-size: calc(1.25rem * var(--text-scale));
+  line-height: calc(1.75rem * var(--text-scale));
+}
+@utility text-d-2xl {
+  font-size: calc(1.5rem * var(--text-scale));
+  line-height: calc(2rem * var(--text-scale));
+}
+@utility text-d-3xl {
+  font-size: calc(1.875rem * var(--text-scale));
+  line-height: calc(2.25rem * var(--text-scale));
+}
+@utility text-d-4xl {
+  font-size: calc(2.25rem * var(--text-scale));
+  line-height: calc(2.5rem * var(--text-scale));
+}
+@utility text-d-5xl {
+  font-size: calc(3rem * var(--text-scale));
+  line-height: 1;
+}
+@utility text-d-6xl {
+  font-size: calc(3.75rem * var(--text-scale));
+  line-height: 1;
 }
 
 .dark {

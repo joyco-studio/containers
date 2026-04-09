@@ -26,7 +26,7 @@ function MentionLabel({
   return (
     <MentionPrimitive.Label
       data-slot="mention-label"
-      className={cn("px-0.5 py-1.5 font-semibold text-sm", className)}
+      className={cn("px-0.5 py-1.5 font-semibold text-d-sm", className)}
       {...props}
     />
   );
@@ -40,7 +40,7 @@ function MentionInput({
     <MentionPrimitive.Input
       data-slot="mention-input"
       className={cn(
-        "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+        "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-d-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -78,7 +78,7 @@ function MentionItem({
     <MentionPrimitive.Item
       data-slot="mention-item"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-50",
+        "relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-d-sm outline-hidden data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-50",
         className,
       )}
       {...props}

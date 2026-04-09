@@ -64,7 +64,7 @@ type ContainerProps = ComponentPropsWithoutRef<"div"> & {
 };
 
 const GRID_ITEM_CLASSES =
-  "col-start-1 col-end-[-1] sm:col-start-1 sm:col-end-10 lg:col-start-3 lg:col-end-11";
+  "col-start-1 col-end-[-1] md:col-start-2 md:col-end-10 2xl:col-start-3 2xl:col-end-11";
 
 export function Container({
   variant: variantProp,

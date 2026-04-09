@@ -1068,10 +1068,10 @@ function MediaPlayerError(props: MediaPlayerErrorProps) {
         <div className="flex max-w-md flex-col items-center gap-4 px-6 py-8 text-center">
           <AlertTriangleIcon className="text-destructive size-12" />
           <div className="flex flex-col gap-px text-center">
-            <h3 className="text-xl font-semibold tracking-tight">
+            <h3 className="text-d-xl font-semibold tracking-tight">
               {errorLabel}
             </h3>
-            <p className="text-muted-foreground text-sm leading-relaxed text-balance">
+            <p className="text-muted-foreground text-d-sm leading-relaxed text-balance">
               {errorDescription}
             </p>
           </div>
@@ -1151,7 +1151,7 @@ function MediaPlayerVolumeIndicator(props: DivProps) {
           ) : (
             <Volume1Icon className="size-6" />
           )}
-          <span className="text-sm font-medium tabular-nums">
+          <span className="text-d-sm font-medium tabular-nums">
             {mediaMuted ? 'Muted' : `${volumePercentage}%`}
           </span>
         </div>
@@ -2116,7 +2116,7 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
                 {currentChapterCue && (
                   <div
                     data-slot="media-player-seek-chapter-title"
-                    className="line-clamp-2 max-w-48 text-center text-xs text-balance"
+                    className="line-clamp-2 max-w-48 text-center text-d-xs text-balance"
                   >
                     {currentChapterCue.text}
                   </div>
@@ -2124,7 +2124,7 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
                 <div
                   data-slot="media-player-seek-time"
                   className={cn(
-                    'text-center text-xs whitespace-nowrap tabular-nums',
+                    'text-center text-d-xs whitespace-nowrap tabular-nums',
                     thumbnail && 'pb-1.5',
                     !(thumbnail || currentChapterCue) && 'px-2.5 py-1'
                   )}
@@ -2143,9 +2143,9 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
   if (withTime) {
     return (
       <div className="flex w-full items-center gap-2">
-        <span className="text-sm tabular-nums">{currentTime}</span>
+        <span className="text-d-sm tabular-nums">{currentTime}</span>
         {SeekSlider}
-        <span className="text-sm tabular-nums">{remainingTime}</span>
+        <span className="text-d-sm tabular-nums">{remainingTime}</span>
       </div>
     )
   }
@@ -2333,7 +2333,7 @@ function MediaPlayerTime(props: MediaPlayerTimeProps) {
         data-variant={variant}
         dir={context.dir}
         {...timeProps}
-        className={cn('text-foreground/80 text-sm tabular-nums', className)}
+        className={cn('text-foreground/80 text-d-sm tabular-nums', className)}
       >
         {times[variant]}
       </TimePrimitive>
@@ -2347,7 +2347,7 @@ function MediaPlayerTime(props: MediaPlayerTimeProps) {
       dir={context.dir}
       {...timeProps}
       className={cn(
-        'text-foreground/80 flex items-center gap-1 text-sm',
+        'text-foreground/80 flex items-center gap-1 text-d-sm',
         className
       )}
     >
