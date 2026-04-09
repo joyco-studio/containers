@@ -524,7 +524,7 @@ function HeroCopy() {
       </h1>
       <p className="mt-4 max-w-xl text-d-lg text-zinc-600 dark:text-zinc-400">
         Pick a container above to see how a typical page layout behaves under
-        each option from the Tailwind Plus containers gallery.
+        each option.
       </p>
       <div className="mt-6 flex gap-3">
         <Button size="lg">Get started</Button>
