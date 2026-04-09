@@ -115,8 +115,6 @@ const VARIANT_EXAMPLES: Record<
         detail:
           "When you need a layout primitive that opts into specific spans — a hero image at cols 1–6, a sidebar at cols 8–12 — the grid track already exists on the wrapper. No extra scaffolding, just declare `col-start-X col-end-Y` on a child.",
       },
-      "Mirrors a Figma 12-col system 1:1: `col 3–10` in design becomes `col-start-3 col-end-11` in code.",
-      "Column count steps up with breakpoints (1 → 6 → 12), so small viewports get a single-column stack automatically.",
     ],
     cons: [
       {
@@ -164,40 +162,8 @@ const VARIANT_EXAMPLES: Record<
   },
   "container-responsive": {
     description:
-      "An *emulated* 12-column grid: instead of making the wrapper `display: grid`, it derives the side padding from the same column-and-gap math the grid would produce. Children stay normal block/flex elements — they just happen to sit inside gutters that match a 12-col grid as if it were there.",
+      "A fluid-padding container: side `padding-inline` is a continuous function of viewport width (with breakpoint-tuned divisors), capped at 1920px. Marketed as an 'emulated 12-col grid', but the actual formula doesn't produce a clean whole-column breakdown — it's really just a hand-tuned fluid padding that feels grid-adjacent.",
     pros: [
-      {
-        summary: "Side padding derived from the 12-col math, no grid items required.",
-        detail: (
-          <>
-            <p>
-              The side <code>padding-inline</code> is computed from the same
-              column + gap math the conceptual 12-col grid uses (specifically:{" "}
-              <strong>1.5 columns + 1.5 gaps</strong> on each side). So the
-              gutter you see at any viewport size is mathematically consistent
-              with the grid the rest of the system follows.
-            </p>
-            <ColumnDiagram />
-            <p>
-              Above: the viewport laid out as a conceptual 12-col grid. Blue
-              cells are columns, pink strips are gaps. The lime dashed overlay
-              on each side marks the <code>padding-inline</code> region — it
-              doesn&apos;t snap to a column boundary, it lands{" "}
-              <strong>1.5 cols + 1.5 gaps</strong> in from the edge. What&apos;s
-              left in the middle is the content area: <strong>9 inner cols</strong>
-              {" "}of usable space.
-            </p>
-            <p>
-              The win is that you get this consistency{" "}
-              <strong>without making every child a grid item</strong>. Drop in
-              a block, a flex container, anything — it just gets the same
-              grid-derived padding as its parent. Children don&apos;t &ldquo;snap to
-              grid lines&rdquo; (there are no grid lines, just padding), but
-              they all live inside the same conceptually-aligned canvas.
-            </p>
-          </>
-        ),
-      },
       {
         summary: "Side padding flexes smoothly, no breakpoint snaps.",
         detail:
@@ -208,59 +174,41 @@ const VARIANT_EXAMPLES: Record<
         detail:
           "Above 1920px the math switches to centering inside a fixed canvas, so ultrawide monitors don't keep stretching content. Same 'above the cap is gutter, not your problem' guarantee as Max Width, just at a much larger cap.",
       },
-      {
-        summary: "Emulated + real grid can cohabit — but use 9 columns, not 12.",
-        detail: (
-          <>
-            <p>
-              The padding formula <code>(W + gap) / 9</code> represents{" "}
-              <strong>1.5 columns + 1.5 gaps</strong> on each side of a
-              conceptual 12-col grid. That means the content area left over is
-              exactly <strong>9 columns wide</strong> (with the same gap).
-            </p>
-            <p>
-              So if you drop a <code>display: grid</code> child inside and give
-              it <code>grid-cols-9</code> + <code>gap: var(--grid-gap)</code>,
-              its column lines land exactly on the lines the conceptual 12-col
-              grid implies (cols 2.5 → 10.5). Real grid where you need it; the
-              rest of the page inherits the same rhythm via padding.
-            </p>
-            <p>
-              <strong>The trap:</strong> the conceptual grid is 12 cols, so the
-              obvious thing to write is <code>grid-cols-12</code> — and that{" "}
-              <strong>does not line up</strong>, because it crams 12 columns
-              into 9 columns of horizontal space.
-            </p>
-            <p>
-              On a wide site this is a real footgun: reviewers see &ldquo;looks
-              aligned-ish&rdquo; and ship it, then a designer flags that the
-              inner grid is 25% off the global rhythm. Document the rule
-              loudly:
-            </p>
-            <ul>
-              <li>
-                Inside <code>container-responsive</code>, use{" "}
-                <strong>9 columns, not 12</strong>.
-              </li>
-              <li>
-                Always pair the inner grid with{" "}
-                <code>gap: var(--grid-gap)</code>.
-              </li>
-            </ul>
-          </>
-        ),
-      },
+      "Children stay normal block/flex elements — no grid-item bookkeeping, drop anything in and it inherits the padding.",
     ],
     cons: [
       {
-        summary: "Opaque padding formula — 'why divide by 9?'",
-        detail:
-          "`(min(100%, 1920px) + var(--grid-gap)) / 9` is unreadable at a glance. Readers have to reverse-engineer that '9' comes from 12 cols minus 1.5 cols + 1.5 gaps on each side. Without a comment explaining the derivation, this looks like a magic number.",
+        summary: "The 'grid-derived' framing is aspirational, not what the code does.",
+        detail: (
+          <>
+            <p>
+              The CSS comment says{" "}
+              <code>padding = 1.5 cols + 1.5 gaps = (W + g) / 8</code>, which
+              would leave exactly 9 inner cols of content in a 12-col
+              conceptual grid. But the code uses{" "}
+              <code>(W + g) / 9</code>, not <code>/ 8</code>.
+            </p>
+            <p>
+              Working the math, <code>/9</code> gives ≈ <strong>1.33 cols + 1.33 gaps</strong>{" "}
+              of padding, leaving ≈ <strong>9.33 inner cols</strong> of
+              content — not exactly 9. So there&apos;s no clean column count
+              inside: a real <code>grid-cols-9</code> child almost fits but
+              leaves about a third of a column of unused space on the trailing
+              edge.
+            </p>
+            <p>
+              In practice this is visually fine (the padding still scales
+              nicely with the viewport), but the &ldquo;emulated 12-col grid&rdquo;
+              story is a lie. It&apos;s a bespoke fluid padding formula, not a
+              grid system. Treat it as such.
+            </p>
+          </>
+        ),
       },
       {
-        summary: "One-way alignment: gutters match, interiors don't.",
+        summary: "Opaque padding formula — 'why divide by 9?'",
         detail:
-          "Because there's no actual grid, children that want to span specific columns have to redo the math themselves. The alignment guarantee is one-way — outer gutters always match the conceptual 12-col grid, but anything inside the content area is on its own.",
+          "`(min(100%, 1920px) + var(--grid-gap)) / 9` is unreadable at a glance and, as noted above, doesn't map cleanly to any whole-column breakdown. The CSS comment next to it is also wrong (says `/8`). Looks like a magic number because it effectively is one.",
       },
       {
         summary: "1920 → 2320px range needs hand-tuned breakpoints.",
@@ -283,7 +231,9 @@ export default function Home() {
     <ContainerProvider>
       <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-100">
         {/* Sticky picker */}
-        <div className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-black/80">
+        <div
+          className="sticky [--text-scale:1] top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-black/80"
+        >
           <VariantPicker />
         </div>
 
@@ -589,7 +539,7 @@ type ScaleMode = "all" | "text";
 
 function BaseSizePicker() {
   const [size, setSize] = useState<number>(16);
-  const [mode, setMode] = useState<ScaleMode>("all");
+  const [mode, setMode] = useState<ScaleMode>("text");
   useEffect(() => {
     const html = document.documentElement;
     if (mode === "all") {
@@ -636,135 +586,6 @@ function BaseSizePicker() {
   );
 }
 
-function ColumnDiagram() {
-  // Conceptual 12-col grid: col=32, gap=8 → total = 472
-  // Side padding (per CSS comment): 1.5*col + 1.5*gap = 48 + 12 = 60
-  const COL = 32;
-  const GAP = 8;
-  const COLS = 12;
-  const TOTAL = COLS * COL + (COLS - 1) * GAP; // 472
-  const PAD = 1.5 * COL + 1.5 * GAP; // 60
-  return (
-    <svg
-      viewBox={`0 0 ${TOTAL} 110`}
-      className="my-2 w-full rounded border border-zinc-800 bg-zinc-950"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Columns */}
-      {Array.from({ length: COLS }).map((_, i) => {
-        const x = i * (COL + GAP);
-        return (
-          <g key={`c${i}`}>
-            <rect
-              x={x}
-              y={25}
-              width={COL}
-              height={55}
-              fill="rgba(96,165,250,0.22)"
-              stroke="rgba(147,197,253,0.55)"
-              strokeWidth="0.5"
-            />
-            <text
-              x={x + COL / 2}
-              y={58}
-              fill="#cbd5e1"
-              fontSize="10"
-              fontFamily="monospace"
-              textAnchor="middle"
-            >
-              {i + 1}
-            </text>
-          </g>
-        );
-      })}
-      {/* Gaps */}
-      {Array.from({ length: COLS - 1 }).map((_, i) => (
-        <rect
-          key={`g${i}`}
-          x={COL + i * (COL + GAP)}
-          y={25}
-          width={GAP}
-          height={55}
-          fill="rgba(236,72,153,0.4)"
-        />
-      ))}
-      {/* Side padding overlays */}
-      <rect
-        x={0}
-        y={20}
-        width={PAD}
-        height={65}
-        fill="rgba(74,222,128,0.18)"
-        stroke="rgba(134,239,172,0.85)"
-        strokeWidth="1"
-        strokeDasharray="3 2"
-      />
-      <rect
-        x={TOTAL - PAD}
-        y={20}
-        width={PAD}
-        height={65}
-        fill="rgba(74,222,128,0.18)"
-        stroke="rgba(134,239,172,0.85)"
-        strokeWidth="1"
-        strokeDasharray="3 2"
-      />
-      {/* Top labels */}
-      <text
-        x={PAD / 2}
-        y={14}
-        fill="#86efac"
-        fontSize="9"
-        fontFamily="monospace"
-        textAnchor="middle"
-      >
-        padding
-      </text>
-      <text
-        x={TOTAL - PAD / 2}
-        y={14}
-        fill="#86efac"
-        fontSize="9"
-        fontFamily="monospace"
-        textAnchor="middle"
-      >
-        padding
-      </text>
-      <text
-        x={TOTAL / 2}
-        y={14}
-        fill="#93c5fd"
-        fontSize="9"
-        fontFamily="monospace"
-        textAnchor="middle"
-      >
-        content area · 9 inner cols
-      </text>
-      {/* Bottom labels */}
-      <text
-        x={PAD / 2}
-        y={100}
-        fill="#86efac"
-        fontSize="8"
-        fontFamily="monospace"
-        textAnchor="middle"
-      >
-        1.5 col + 1.5 gap
-      </text>
-      <text
-        x={TOTAL - PAD / 2}
-        y={100}
-        fill="#86efac"
-        fontSize="8"
-        fontFamily="monospace"
-        textAnchor="middle"
-      >
-        1.5 col + 1.5 gap
-      </text>
-    </svg>
-  );
-}
-
 function PointItem({
   point,
   tone,
@@ -790,7 +611,7 @@ function PointItem({
         <CollapsibleTrigger className="group flex w-full gap-2 py-1 text-left hover:text-zinc-200">
           <span className={markerColor}>{marker}</span>
           <span className="flex-1">{point.summary}</span>
-          <span className="text-xs text-zinc-500 transition-transform group-data-[state=open]:rotate-90">
+          <span className="text-lg leading-none text-zinc-400 transition-transform group-data-[state=open]:rotate-90">
             ›
           </span>
         </CollapsibleTrigger>
