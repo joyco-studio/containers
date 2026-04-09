@@ -157,7 +157,11 @@ const VARIANT_EXAMPLES: Record<
       },
     ],
     sites: [
-      { name: "Example", url: "https://example.com", note: "Replace with a real reference." },
+      {
+        name: "Darkroom",
+        url: "https://darkroom.engineering/",
+        note: "Editorial site built on a visible 8-col grid (4 cols on tablet / mobile) — children opt into specific spans rather than living inside a single content cell.",
+      },
     ],
   },
   "container-responsive": {
