@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Container,
   ContainerProvider,
@@ -187,6 +187,8 @@ function VariantPicker() {
   return (
     <div className="py-3 overflow-x-auto px-4">
       <div className="flex justify-center items-center gap-2 w-full min-w-max">
+        <WindowSize />
+        <span className="mx-2 h-5 w-px bg-zinc-700" />
         {VARIANTS.map((v) => {
           const active = variant === v.id;
           return (
@@ -277,5 +279,21 @@ function HeroCopy() {
         <Button size="lg" variant="outline">Learn more</Button>
       </div>
     </div>
+  );
+}
+
+function WindowSize() {
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    const update = () =>
+      setSize({ w: window.innerWidth, h: window.innerHeight });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  return (
+    <code className="rounded bg-zinc-100 px-2 py-1 font-mono text-xs tabular-nums dark:bg-zinc-900">
+      {size ? `w: ${size.w} × h: ${size.h}` : "— × —"}
+    </code>
   );
 }
