@@ -12,7 +12,8 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import clsx from "clsx";
 
 export const VARIANTS = [
-  { id: "container-constrained", label: "Max Width" },
+  { id: "container-max-w", label: "Max Width" },
+  { id: "container-padded-max-w", label: "Padded Max Width" },
   { id: "container-critical-breakpoint", label: "Critical Breakpoint" },
   { id: "container-grid", label: "Grid" },
   { id: "container-responsive", label: "Emulated Grid" },
@@ -41,7 +42,7 @@ const ContainerContext = createContext<ContainerContextValue | null>(null);
 
 export function ContainerProvider({
   children,
-  initialVariant = "container-constrained",
+  initialVariant = "container-max-w",
 }: {
   children: ReactNode;
   initialVariant?: ContainerVariant;
@@ -79,7 +80,7 @@ type ContainerProps = ComponentPropsWithoutRef<"div"> & {
 };
 
 const GRID_ITEM_CLASSES =
-  "col-start-1 col-end-[-1] md:col-start-2 md:col-end-10 2xl:col-start-3 2xl:col-end-11";
+  "col-start-1 col-end-[-1] lg:col-start-2 lg:col-end-10 2xl:col-start-3 2xl:col-end-11";
 
 export function Container({
   variant: variantProp,
