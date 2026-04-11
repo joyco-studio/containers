@@ -265,6 +265,26 @@ export default function Home() {
           </Container>
         </section>
 
+        {/* Zigzag features */}
+        <ZigzagRow direction="ltr">
+          <ZigzagContent
+            title="Ship faster with less complexity"
+            description="A single workflow for building, testing, and deploying — so your team spends less time on tooling and more time on what matters."
+          />
+        </ZigzagRow>
+        <ZigzagRow direction="rtl">
+          <ZigzagContent
+            title="Observe everything in real time"
+            description="Built-in tracing, metrics, and logs give you full visibility from the first deploy — no extra SDKs, no config files."
+          />
+        </ZigzagRow>
+        <ZigzagRow direction="ltr">
+          <ZigzagContent
+            title="Scale without rewrites"
+            description="The same primitives that power a weekend prototype hold up under production traffic, real teams, and tight deadlines."
+          />
+        </ZigzagRow>
+
         {/* Feature grid — the section where the grid container actually shines */}
         <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
           <Container>
@@ -626,6 +646,54 @@ function PointItem({
         </CollapsibleContent>
       </Collapsible>
     </li>
+  );
+}
+
+function ZigzagRow({
+  direction,
+  children,
+}: {
+  direction: "ltr" | "rtl";
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
+      <Container>
+        <div
+          className={`flex flex-col items-center gap-10 lg:flex-row lg:gap-16 ${
+            direction === "rtl" ? "lg:flex-row-reverse" : ""
+          }`}
+        >
+          {children}
+          <div className="aspect-square lg:aspect-[7/8] w-full rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 lg:w-1/2 lg:shrink-0" />
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function ZigzagContent({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="w-full lg:w-1/2">
+      <h2 className="text-d-3xl font-semibold tracking-tight sm:text-d-4xl">
+        {title}
+      </h2>
+      <p className="mt-4 text-d-lg text-zinc-600 dark:text-zinc-400">
+        {description}
+      </p>
+      <div className="mt-6 flex gap-3">
+        <Button size="lg">Get started</Button>
+        <Button size="lg" variant="outline">
+          Learn more
+        </Button>
+      </div>
+    </div>
   );
 }
 
