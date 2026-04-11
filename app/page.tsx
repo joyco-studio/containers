@@ -265,6 +265,28 @@ export default function Home() {
           </Container>
         </section>
 
+        {/* Asset */}
+        <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
+          <Container>
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="text-d-3xl font-semibold tracking-tight sm:text-d-4xl">
+                Ship faster with less complexity
+              </h2>
+              <p className="mt-4 text-d-lg text-zinc-600 dark:text-zinc-400">
+                A single workflow for building, testing, and deploying — so your
+                team spends less time on tooling and more time on what matters.
+              </p>
+              <div className="mt-6 flex justify-center gap-3">
+                <Button size="lg">Get started</Button>
+                <Button size="lg" variant="outline">
+                  Learn more
+                </Button>
+              </div>
+            </div>
+            <div className="mt-10 aspect-[16/9] w-full rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900" />
+          </Container>
+        </section>
+
         {/* Feature grid — the section where the grid container actually shines */}
         <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
           <Container>
