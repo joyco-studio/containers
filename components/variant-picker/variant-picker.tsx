@@ -31,6 +31,9 @@ import {
 } from "@/components/scroll-area";
 import {
   BASE_SIZES,
+  BASE_VIEWPORTS,
+  DEFAULT_BASE_VIEWPORT,
+  MODE_LABELS,
   SCALE_MODES,
   VARIANT_EXAMPLES,
   type VariantPoint,
@@ -40,7 +43,7 @@ export function VariantPicker() {
   const { variant, setVariant } = useContainer();
   const [openInfo, setOpenInfo] = useState<ContainerVariant | null>(null);
   return (
-    <div className="container-constrained flex gap-x-6 justify-between h-14 items-center">
+    <div className="container-max-w flex gap-x-6 justify-between h-14 items-center">
       <div className="flex items-center justify-center h-full aspect-square bg-primary relative">
         <Image
           src="/iso-framed.svg"
@@ -169,10 +172,21 @@ function BaseSizePicker() {
       .withDefault("text")
       .withOptions({ history: "replace", shallow: true }),
   );
+  const [baseViewport, setBaseViewport] = useQueryState(
+    "bv",
+    parseAsInteger
+      .withDefault(DEFAULT_BASE_VIEWPORT)
+      .withOptions({ history: "replace", shallow: true }),
+  );
   useEffect(() => {
     const html = document.documentElement;
     if (mode === "all") {
       html.style.fontSize = `${size}px`;
+      html.style.setProperty("--text-scale", "1");
+    } else if (mode === "scalable") {
+      // calc(unitless * length / unitless) = length.
+      // At vw === baseViewport, this evaluates to exactly `${size}px`.
+      html.style.fontSize = `calc(${size} * 100vw / ${baseViewport})`;
       html.style.setProperty("--text-scale", "1");
     } else {
       html.style.fontSize = "";
@@ -182,7 +196,7 @@ function BaseSizePicker() {
       html.style.fontSize = "";
       html.style.removeProperty("--text-scale");
     };
-  }, [size, mode]);
+  }, [size, mode, baseViewport]);
   return (
     <>
       <ButtonGroup>
@@ -194,7 +208,7 @@ function BaseSizePicker() {
             variant={mode === m ? "default" : "outline"}
             onClick={() => void setMode(m)}
           >
-            {m === "all" ? "All" : "Text"}
+            {MODE_LABELS[m]}
           </Button>
         ))}
       </ButtonGroup>
@@ -211,6 +225,21 @@ function BaseSizePicker() {
           </Button>
         ))}
       </ButtonGroup>
+      {mode === "scalable" && (
+        <ButtonGroup>
+          {BASE_VIEWPORTS.map((v) => (
+            <Button
+              key={v}
+              type="button"
+              size="sm"
+              variant={baseViewport === v ? "default" : "outline"}
+              onClick={() => void setBaseViewport(v)}
+            >
+              {v}
+            </Button>
+          ))}
+        </ButtonGroup>
+      )}
     </>
   );
 }

@@ -99,6 +99,7 @@
   --sides: 1rem;
   --grid-gap: 1.5rem;
   --text-scale: 1;
+  --max-width: 80rem;
 
   @media (width >= theme(screens.sm)) {
     --sides: 1.5rem;
@@ -116,13 +117,24 @@
  * ------------------------------------------------------------------------- */
 
 /* 1. Constrained — capped width, responsive horizontal padding */
-@utility container-constrained {
+@utility container-max-w {
   width: 100%;
   margin-inline: auto;
-  max-width: 80rem; /* max-w-7xl */
+  max-width: var(--max-width); /* max-w-7xl */
   padding-inline: var(--sides);
-  @media (width >= 640px) { padding-inline: 1.5rem; }
-  @media (width >= 1024px) { padding-inline: 2rem; }
+
+  @media (width >= 640px) {
+    --sides: 1.5rem;
+  }
+
+  @media (width >= 1024px) { 
+    --sides: 2rem;
+  }
+}
+
+@utility container-padded-max-w {
+  width: 100%;
+  padding-inline: max(calc((100vw - var(--max-width) + var(--sides) * 2) / 2), var(--sides));
 }
 
 @utility container-critical-breakpoint {
@@ -184,7 +196,7 @@
   grid-template-columns: repeat(1, minmax(0, 1fr));
   @media (width >= theme(screens.md)) {
     padding-inline: 1.5rem;
-    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   @media (width >= theme(screens.lg)) {
     padding-inline: 2rem;
@@ -290,7 +302,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans border-border;
   }
   *::-webkit-scrollbar {
     -webkit-appearance: none;

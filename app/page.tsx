@@ -6,6 +6,7 @@ import { ZigzagFeatures } from "@/components/section/zigzag-features";
 import { Together } from "@/components/section/together";
 import { FeatureGrid } from "@/components/section/feature-grid";
 import { Cards } from "@/components/section/cards";
+import { Slider } from "@/components/section/slider";
 import { Pricing } from "@/components/section/pricing";
 import { CTA } from "@/components/section/cta";
 import { Footer } from "@/components/section/footer";
@@ -24,6 +25,7 @@ export default function Home() {
       <Together />
       <FeatureGrid />
       <Cards />
+      <Slider />
       <Pricing />
       <CTA />
       <Footer />

@@ -1,6 +1,6 @@
 import { Container } from "@/app/container";
 
-type TogetherItem = {
+export type TogetherItem = {
   title: string;
   description: string;
   linkLabel: string;
@@ -41,7 +41,7 @@ export function Together() {
   );
 }
 
-function TogetherCard({
+export function TogetherCard({
   title,
   description,
   linkLabel,

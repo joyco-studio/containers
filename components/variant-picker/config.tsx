@@ -12,7 +12,7 @@ export type VariantInfo = {
 };
 
 export const VARIANT_EXAMPLES: Record<ContainerVariant, VariantInfo> = {
-  "container-constrained": {
+  "container-max-w": {
     description:
       "A single max-width column centered on the page. The classic content container.",
     pros: [
@@ -53,6 +53,43 @@ export const VARIANT_EXAMPLES: Record<ContainerVariant, VariantInfo> = {
         name: "Shopify Design",
         url: "https://shopify.design/",
         note: "Editorial layout centered in a fixed max-width column.",
+      },
+    ],
+  },
+  "container-padded-max-w": {
+    description:
+      "Max-width capped content where the horizontal padding IS the overflow gutter: padding-inline = (100vw − max-w) / 2. Below the cap the element goes fully edge-to-edge; above the cap the padding soaks up the extra viewport width so content stays locked at max-width.",
+    pros: [
+      {
+        summary: "Full-bleed backgrounds and capped content share one element.",
+        detail:
+          "Above the cap the container still occupies the full viewport — the overflow is its own padding, not dead margin. So a background-color on the container fills the viewport AND the content column sits at max-width without any wrapper/inner split. The 'full-bleed bg vs. capped content' mismatch that Max Width has is gone.",
+      },
+      {
+        summary: "Below the cap, every pixel is usable.",
+        detail:
+          "padding-inline clamps to 0 when the viewport is narrower than max-width, so on mobile and tablet content spans edge-to-edge with no wasted gutter. Good for dense dashboards or mobile-first layouts that want every available pixel.",
+      },
+      "One formula, no breakpoints. Padding is a pure function of viewport and max-width.",
+    ],
+    cons: [
+      {
+        summary: "Content slams the viewport edge below the cap.",
+        detail:
+          "Because padding collapses to 0 under max-width, text and controls sit flush against the screen edge on mobile/tablet. You almost always need an inner wrapper with its own padding for readability, which partly defeats the point of using this variant as your only container.",
+      },
+      {
+        summary: "Hard transition at the cap — no smooth handoff.",
+        detail:
+          "At exactly viewport = max-width the padding snaps from 0 to growing with vw. There's no intermediate region where the gutter eases in; it's binary. Constrained or Responsive containers both scale more gracefully through that threshold.",
+      },
+      "Relies on 100vw, which includes the scrollbar on some platforms — can cause a tiny horizontal overflow unless you account for it.",
+    ],
+    sites: [
+      {
+        name: "Example",
+        url: "https://example.com",
+        note: "Replace with a real reference.",
       },
     ],
   },
@@ -219,5 +256,15 @@ export const VARIANT_EXAMPLES: Record<ContainerVariant, VariantInfo> = {
 };
 
 export const BASE_SIZES = [12, 14, 16, 18, 20] as const;
-export const SCALE_MODES = ["all", "text"] as const;
+export const SCALE_MODES = ["text", "all", "scalable"] as const;
 export type ScaleMode = (typeof SCALE_MODES)[number];
+
+export const MODE_LABELS: Record<ScaleMode, string> = {
+  text: "Text",
+  all: "All",
+  scalable: "Scalable",
+};
+
+export const BASE_VIEWPORTS = [480, 768, 1440, 1920] as const;
+export type BaseViewport = (typeof BASE_VIEWPORTS)[number];
+export const DEFAULT_BASE_VIEWPORT: BaseViewport = 1440;

@@ -43,7 +43,7 @@ export function FeatureGrid() {
               key={feature.title}
               className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
             >
-              <div className="mb-3 h-8 w-8 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="mb-3 h-8 w-8 rounded bg-muted border" />
               <h3 className="font-semibold">{feature.title}</h3>
               <p className="mt-1 text-d-sm text-zinc-600 dark:text-zinc-400">
                 {feature.description}
