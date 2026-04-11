@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
+  parseAsInteger,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
+import {
   Container,
   ContainerProvider,
   VARIANTS,
@@ -21,8 +26,69 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Image from "next/image";
+import {
+  ScrollAreaViewport,
+  ScrollAreaContent,
+} from "@/components/scroll-area";
 
 type VariantPoint = string | { summary: string; detail: React.ReactNode };
+
+type PricingTier = {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  cta: string;
+  featured?: boolean;
+};
+
+const PRICING_TIERS: PricingTier[] = [
+  {
+    name: "Hobby",
+    price: "$0",
+    period: "forever",
+    description: "Everything you need to get a side project off the ground.",
+    features: [
+      "Up to 3 projects",
+      "Community support",
+      "1 GB bandwidth",
+      "Basic analytics",
+    ],
+    cta: "Start free",
+  },
+  {
+    name: "Pro",
+    price: "$24",
+    period: "per month",
+    description: "For growing teams that need more power and collaboration.",
+    features: [
+      "Unlimited projects",
+      "Priority support",
+      "100 GB bandwidth",
+      "Advanced analytics",
+      "Custom domains",
+    ],
+    cta: "Start free trial",
+    featured: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "contact us",
+    description:
+      "Dedicated infrastructure and support for large organizations.",
+    features: [
+      "Everything in Pro",
+      "Dedicated support",
+      "Unlimited bandwidth",
+      "SSO & SAML",
+      "SLA & audit logs",
+    ],
+    cta: "Talk to sales",
+  },
+];
 
 const VARIANT_EXAMPLES: Record<
   ContainerVariant,
@@ -84,21 +150,27 @@ const VARIANT_EXAMPLES: Record<
       "Caps out at xl (1280px) — like Max Width, anything above that is just gutter and not your problem.",
       "At each breakpoint the container width *equals* the breakpoint exactly, so layouts hit pixel-perfect alignment with sm/md/lg/xl Figma frames.",
       {
-        summary: "Desktop QA collapses to 4 exact widths instead of a continuum.",
+        summary:
+          "Desktop QA collapses to 4 exact widths instead of a continuum.",
         detail:
           "Below sm the content collapses fluidly (handle it like any mobile layout). Above sm the container only ever takes one of four exact widths — sm, md, lg, or xl. So the entire desktop range collapses into just four states to design and QA, not an infinite range of viewport sizes.",
       },
     ],
     cons: [
       {
-        summary: "Same full-bleed mismatch as Max Width, but at every breakpoint.",
+        summary:
+          "Same full-bleed mismatch as Max Width, but at every breakpoint.",
         detail:
           "Between breakpoints the container width is frozen while the viewport keeps growing — so the side gutter expands until the next snap. You get the 'background fills the viewport, content sits in an island' problem from Max Width, except it repeats four times over instead of just once.",
       },
       "In-between widths are wasted — a 1200px viewport renders as if it were 1024px.",
     ],
     sites: [
-      { name: "Example", url: "https://example.com", note: "Replace with a real reference." },
+      {
+        name: "Example",
+        url: "https://example.com",
+        note: "Replace with a real reference.",
+      },
     ],
   },
   "container-grid": {
@@ -118,18 +190,18 @@ const VARIANT_EXAMPLES: Record<
     ],
     cons: [
       {
-        summary: "Wrapper pins all content into a single fixed cell (in this codebase).",
+        summary:
+          "Wrapper pins all content into a single fixed cell (in this codebase).",
         detail: (
           <>
             <p>
-              <code>&lt;Container&gt;</code> wraps all children in one grid
-              item pinned to <code>col-start-3 col-end-11</code> at{" "}
-              <code>lg</code>.
+              <code>&lt;Container&gt;</code> wraps all children in one grid item
+              pinned to <code>col-start-3 col-end-11</code> at <code>lg</code>.
             </p>
             <p>
-              So in practice content is plain block flow inside one fixed cell
-              — none of the &ldquo;real grid&rdquo; flexibility from the pros
-              is exposed unless you bypass <code>Container</code> and emit grid
+              So in practice content is plain block flow inside one fixed cell —
+              none of the &ldquo;real grid&rdquo; flexibility from the pros is
+              exposed unless you bypass <code>Container</code> and emit grid
               items yourself.
             </p>
           </>
@@ -146,12 +218,14 @@ const VARIANT_EXAMPLES: Record<
           "Without a max-width cap, anything that breaks out to the full 12 cols on a large display reproduces the unreadable wide-line problem Max Width was solving. The current wrapper (cols 3–11 of 12) softens this, but it's not enforced.",
       },
       {
-        summary: "Two scaling models (fixed padding, fluid columns) coexist awkwardly.",
+        summary:
+          "Two scaling models (fixed padding, fluid columns) coexist awkwardly.",
         detail:
           "Padding outside the grid is fixed per breakpoint (1 / 1.5 / 2rem), so the *outermost* gutter stops scaling at 1024px even though the columns inside keep stretching. Two different scaling rules in the same component.",
       },
       {
-        summary: "Column count changes per breakpoint, so spans must be re-declared.",
+        summary:
+          "Column count changes per breakpoint, so spans must be re-declared.",
         detail:
           "1 col below 640, 6 cols 640–1024, 12 cols above 1024. Any explicit span like `col-start-3 col-end-11` only makes sense at ≥1024px — at smaller breakpoints you have to re-declare it or fall back to auto-placement (which usually breaks the layout).",
       },
@@ -182,27 +256,28 @@ const VARIANT_EXAMPLES: Record<
     ],
     cons: [
       {
-        summary: "The 'grid-derived' framing is aspirational, not what the code does.",
+        summary:
+          "The 'grid-derived' framing is aspirational, not what the code does.",
         detail: (
           <>
             <p>
               The CSS comment says{" "}
               <code>padding = 1.5 cols + 1.5 gaps = (W + g) / 8</code>, which
-              would leave exactly 9 inner cols of content in a 12-col
-              conceptual grid. But the code uses{" "}
-              <code>(W + g) / 9</code>, not <code>/ 8</code>.
+              would leave exactly 9 inner cols of content in a 12-col conceptual
+              grid. But the code uses <code>(W + g) / 9</code>, not{" "}
+              <code>/ 8</code>.
             </p>
             <p>
-              Working the math, <code>/9</code> gives ≈ <strong>1.33 cols + 1.33 gaps</strong>{" "}
-              of padding, leaving ≈ <strong>9.33 inner cols</strong> of
-              content — not exactly 9. So there&apos;s no clean column count
-              inside: a real <code>grid-cols-9</code> child almost fits but
-              leaves about a third of a column of unused space on the trailing
-              edge.
+              Working the math, <code>/9</code> gives ≈{" "}
+              <strong>1.33 cols + 1.33 gaps</strong> of padding, leaving ≈{" "}
+              <strong>9.33 inner cols</strong> of content — not exactly 9. So
+              there&apos;s no clean column count inside: a real{" "}
+              <code>grid-cols-9</code> child almost fits but leaves about a
+              third of a column of unused space on the trailing edge.
             </p>
             <p>
-              In practice this is visually fine (the padding still scales
-              nicely with the viewport), but the &ldquo;emulated 12-col grid&rdquo;
+              In practice this is visually fine (the padding still scales nicely
+              with the viewport), but the &ldquo;emulated 12-col grid&rdquo;
               story is a lie. It&apos;s a bespoke fluid padding formula, not a
               grid system. Treat it as such.
             </p>
@@ -233,202 +308,268 @@ const VARIANT_EXAMPLES: Record<
 export default function Home() {
   return (
     <ContainerProvider>
-      <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-100">
-        {/* Sticky picker */}
-        <div
-          className="sticky [--text-scale:1] top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-black/80"
-        >
-          <VariantPicker />
-        </div>
+      {/* Sticky picker */}
+      <div className="sticky [--text-scale:1] top-0 z-10 border-b border-zinc-200 bg-background dark:border-zinc-800">
+        <VariantPicker />
+      </div>
 
-        {/* Header */}
-        <header className="border-b border-dashed border-zinc-300 bg-white py-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <Container>
-            <div className="flex items-center justify-between">
-              <div className="text-d-lg font-semibold">Acme Inc.</div>
-              <nav className="flex gap-6 text-d-sm text-zinc-600 dark:text-zinc-400">
-                <a href="#">Product</a>
-                <a href="#">Pricing</a>
-                <a href="#">Docs</a>
-                <a href="#">Sign in</a>
-              </nav>
-            </div>
-          </Container>
-        </header>
+      {/* Header */}
+      <header className="border-b border-dashed border-zinc-300 py-4 dark:border-zinc-800">
+        <Container>
+          <div className="flex items-center justify-between">
+            <div className="text-d-lg font-semibold">Acme Inc.</div>
+            <nav className="flex gap-6 text-d-sm text-zinc-600 dark:text-zinc-400">
+              <a href="#">Product</a>
+              <a href="#">Pricing</a>
+              <a href="#">Docs</a>
+              <a href="#">Sign in</a>
+            </nav>
+          </div>
+        </Container>
+      </header>
 
-        {/* Hero */}
-        <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
-          <Container>
-            <div>
-              <HeroCopy />
-            </div>
-          </Container>
-        </section>
+      {/* Hero */}
+      <section className="border-b border-dashed border-zinc-300  py-16 dark:border-zinc-800">
+        <Container>
+          <div>
+            <HeroCopy />
+          </div>
+        </Container>
+      </section>
 
-        {/* Zigzag features */}
-        <ZigzagRow direction="ltr">
-          <ZigzagContent
-            title="Ship faster with less complexity"
-            description="A single workflow for building, testing, and deploying — so your team spends less time on tooling and more time on what matters."
-          />
-        </ZigzagRow>
-        <ZigzagRow direction="rtl">
-          <ZigzagContent
-            title="Observe everything in real time"
-            description="Built-in tracing, metrics, and logs give you full visibility from the first deploy — no extra SDKs, no config files."
-          />
-        </ZigzagRow>
-        <ZigzagRow direction="ltr">
-          <ZigzagContent
-            title="Scale without rewrites"
-            description="The same primitives that power a weekend prototype hold up under production traffic, real teams, and tight deadlines."
-          />
-        </ZigzagRow>
+      {/* Zigzag features */}
+      <ZigzagRow direction="ltr">
+        <ZigzagContent
+          title="Ship faster with less complexity"
+          description="A single workflow for building, testing, and deploying — so your team spends less time on tooling and more time on what matters."
+        />
+      </ZigzagRow>
+      <ZigzagRow direction="rtl">
+        <ZigzagContent
+          title="Observe everything in real time"
+          description="Built-in tracing, metrics, and logs give you full visibility from the first deploy — no extra SDKs, no config files."
+        />
+      </ZigzagRow>
+      <ZigzagRow direction="ltr">
+        <ZigzagContent
+          title="Scale without rewrites"
+          description="The same primitives that power a weekend prototype hold up under production traffic, real teams, and tight deadlines."
+        />
+      </ZigzagRow>
 
-        {/* Feature grid — the section where the grid container actually shines */}
-        <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
-          <Container>
-            <div className="grid grid-gap grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Predictable performance everywhere",
-                  description:
-                    "Consistent load times across regions, devices, and network conditions, with sensible defaults out of the box.",
-                },
-                {
-                  title: "First-class developer ergonomics",
-                  description:
-                    "An API designed for the day-to-day, with clear errors and escape hatches when you need them.",
-                },
-                {
-                  title: "Composable, reusable primitives",
-                  description:
-                    "Small building blocks that combine cleanly, so features grow without turning into a tangle.",
-                },
-                {
-                  title: "Built-in observability and tracing",
-                  description:
-                    "Spot regressions before users do, with metrics and traces wired in from the first deploy.",
-                },
-                {
-                  title: "Secure defaults you can trust",
-                  description:
-                    "Hardened configs and safe primitives so the easy path is also the secure one.",
-                },
-                {
-                  title: "Seamless integration with your stack",
-                  description:
-                    "Drops into existing systems without forcing a rewrite or a migration sprint.",
-                },
-              ].map((feature) => (
-                <div
-                  key={feature.title}
-                  className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
-                >
-                  <div className="mb-3 h-8 w-8 rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <h3 className="font-semibold">{feature.title}</h3>
-                  <p className="mt-1 text-d-sm text-zinc-600 dark:text-zinc-400">
-                    {feature.description}
+      {/* Together / scale */}
+      <section className="border-b border-dashed border-zinc-300 py-16 dark:border-zinc-800">
+        <Container>
+          <h2 className="max-w-2xl text-d-3xl font-semibold tracking-tight sm:text-d-4xl">
+            One platform, every team, zero drift
+          </h2>
+          <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-8">
+            <TogetherCard
+              title="Share primitives across every service."
+              description="Publish packages, configs, and deploy targets to a shared registry so every team builds on the same foundation instead of reinventing it."
+              linkLabel="Explore shared packages"
+              linkHref="#"
+            />
+            <TogetherCard
+              title="Spin up new projects in seconds."
+              description="Start from battle-tested starters that wire up CI, observability, and staging environments out of the box — so new teams ship on day one."
+              linkLabel="Browse starters"
+              linkHref="#"
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* Feature grid — the section where the grid container actually shines */}
+      <section className="border-b border-dashed border-zinc-300  py-16 dark:border-zinc-800">
+        <Container>
+          <div className="grid grid-gap grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Predictable performance everywhere",
+                description:
+                  "Consistent load times across regions, devices, and network conditions, with sensible defaults out of the box.",
+              },
+              {
+                title: "First-class developer ergonomics",
+                description:
+                  "An API designed for the day-to-day, with clear errors and escape hatches when you need them.",
+              },
+              {
+                title: "Composable, reusable primitives",
+                description:
+                  "Small building blocks that combine cleanly, so features grow without turning into a tangle.",
+              },
+              {
+                title: "Built-in observability and tracing",
+                description:
+                  "Spot regressions before users do, with metrics and traces wired in from the first deploy.",
+              },
+              {
+                title: "Secure defaults you can trust",
+                description:
+                  "Hardened configs and safe primitives so the easy path is also the secure one.",
+              },
+              {
+                title: "Seamless integration with your stack",
+                description:
+                  "Drops into existing systems without forcing a rewrite or a migration sprint.",
+              },
+            ].map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
+              >
+                <div className="mb-3 h-8 w-8 rounded bg-zinc-200 dark:bg-zinc-800" />
+                <h3 className="font-semibold">{feature.title}</h3>
+                <p className="mt-1 text-d-sm text-zinc-600 dark:text-zinc-400">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* Cards */}
+      <section className="border-b border-dashed border-zinc-300  py-16 dark:border-zinc-800">
+        <Container>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "Fast by default",
+                description:
+                  "Ship pages that load instantly with zero configuration. Every route is optimized out of the box, with smart bundling, automatic code splitting, and edge caching baked in. Spend your time building features, not chasing performance regressions across a sprawling config file.",
+              },
+              {
+                title: "Built to scale",
+                description:
+                  "Take your project from a weekend prototype to a production system serving millions without rewriting a line. The same primitives that make a single page feel snappy hold up under real traffic, real teams, and real deadlines — no architectural rewrites required.",
+              },
+              {
+                title: "Designed for developers",
+                description:
+                  "An API that gets out of your way and lets you focus on the problem in front of you. Sensible defaults, predictable behavior, and escape hatches when you need them. Read the source, trust the abstractions, and ship something you're proud of.",
+              },
+            ].map((card) => (
+              <article
+                key={card.title}
+                className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"
+              >
+                <div className="aspect-[16/10] w-full bg-muted" />
+                <div className="p-6">
+                  <h3 className="text-d-2xl font-semibold tracking-tight">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-d-sm text-zinc-600 dark:text-zinc-400">
+                    {card.description}
                   </p>
                 </div>
-              ))}
-            </div>
-          </Container>
-        </section>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </section>
 
-        {/* Cards */}
-        <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
-          <Container>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Fast by default",
-                  description:
-                    "Ship pages that load instantly with zero configuration. Every route is optimized out of the box, with smart bundling, automatic code splitting, and edge caching baked in. Spend your time building features, not chasing performance regressions across a sprawling config file.",
-                },
-                {
-                  title: "Built to scale",
-                  description:
-                    "Take your project from a weekend prototype to a production system serving millions without rewriting a line. The same primitives that make a single page feel snappy hold up under real traffic, real teams, and real deadlines — no architectural rewrites required.",
-                },
-                {
-                  title: "Designed for developers",
-                  description:
-                    "An API that gets out of your way and lets you focus on the problem in front of you. Sensible defaults, predictable behavior, and escape hatches when you need them. Read the source, trust the abstractions, and ship something you're proud of.",
-                },
-              ].map((card) => (
-                <article
-                  key={card.title}
-                  className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"
-                >
-                  <div className="aspect-[16/10] w-full bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="p-6">
-                    <h3 className="text-d-2xl font-semibold tracking-tight">{card.title}</h3>
-                    <p className="mt-2 text-d-sm text-zinc-600 dark:text-zinc-400">
-                      {card.description}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </Container>
-        </section>
+      {/* Pricing */}
+      <section className="border-b border-dashed border-zinc-300 py-16 dark:border-zinc-800">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-d-3xl font-semibold tracking-tight sm:text-d-4xl">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-4 text-d-lg text-zinc-600 dark:text-zinc-400">
+              Start free, scale as you grow. No hidden fees, cancel anytime.
+            </p>
+          </div>
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {PRICING_TIERS.map((tier) => (
+              <PricingCard key={tier.name} tier={tier} />
+            ))}
+          </div>
+        </Container>
+      </section>
 
-        {/* CTA */}
-        <section className="bg-white py-16 dark:bg-zinc-950">
-          <Container>
-            <div className="rounded-2xl bg-zinc-900 p-10 text-center text-white dark:bg-zinc-100 dark:text-zinc-900">
+      {/* CTA */}
+      <section className="py-16">
+        <Container>
+          <div className="bg-background border grid grid-cols-1 md:grid-cols-2 items-center border-border text-secondary-foreground">
+            <div className="px-8 max-md:py-14 text-center md:text-left">
               <h2 className="text-d-2xl font-semibold">Ready to ship?</h2>
-              <p className="mt-2 text-zinc-300 dark:text-zinc-600">
+              <p className="mt-2 text-muted-foreground text-balance">
                 Swap the container above and watch this block re-flow.
               </p>
+              <Button className="mt-4">Get started</Button>
             </div>
-          </Container>
-        </section>
+            <div className="h-100 bg-muted"></div>
+          </div>
+        </Container>
+      </section>
 
-        {/* Footer */}
-        <footer className="border-t border-dashed border-zinc-300 bg-white py-12 dark:border-zinc-800 dark:bg-zinc-950">
-          <Container>
-            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-              <div>
-                <div className="text-d-sm font-semibold">Product</div>
-                <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
-                  <li><a href="#">Features</a></li>
-                  <li><a href="#">Pricing</a></li>
-                  <li><a href="#">Changelog</a></li>
-                </ul>
-              </div>
-              <div>
-                <div className="text-d-sm font-semibold">Company</div>
-                <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
-                  <li><a href="#">About</a></li>
-                  <li><a href="#">Blog</a></li>
-                  <li><a href="#">Careers</a></li>
-                </ul>
-              </div>
-              <div>
-                <div className="text-d-sm font-semibold">Resources</div>
-                <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
-                  <li><a href="#">Docs</a></li>
-                  <li><a href="#">Support</a></li>
-                  <li><a href="#">Community</a></li>
-                </ul>
-              </div>
-              <div>
-                <div className="text-d-sm font-semibold">Legal</div>
-                <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
-                  <li><a href="#">Privacy</a></li>
-                  <li><a href="#">Terms</a></li>
-                </ul>
-              </div>
+      {/* Footer */}
+      <footer className="border-t border-dashed border-zinc-300  py-12 dark:border-zinc-800">
+        <Container>
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            <div>
+              <div className="text-d-sm font-semibold">Product</div>
+              <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <a href="#">Features</a>
+                </li>
+                <li>
+                  <a href="#">Pricing</a>
+                </li>
+                <li>
+                  <a href="#">Changelog</a>
+                </li>
+              </ul>
             </div>
-            <div className="mt-10 flex items-center justify-between border-t border-zinc-200 pt-6 text-d-xs text-zinc-500 dark:border-zinc-800">
-              <div>© 2026 Acme Inc.</div>
-              <div>Built with containers.</div>
+            <div>
+              <div className="text-d-sm font-semibold">Company</div>
+              <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <a href="#">About</a>
+                </li>
+                <li>
+                  <a href="#">Blog</a>
+                </li>
+                <li>
+                  <a href="#">Careers</a>
+                </li>
+              </ul>
             </div>
-          </Container>
-        </footer>
-      </div>
+            <div>
+              <div className="text-d-sm font-semibold">Resources</div>
+              <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <a href="#">Docs</a>
+                </li>
+                <li>
+                  <a href="#">Support</a>
+                </li>
+                <li>
+                  <a href="#">Community</a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="text-d-sm font-semibold">Legal</div>
+              <ul className="mt-3 space-y-2 text-d-sm text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <a href="#">Privacy</a>
+                </li>
+                <li>
+                  <a href="#">Terms</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 flex items-center justify-between border-t border-zinc-200 pt-6 text-d-xs text-zinc-500 dark:border-zinc-800">
+            <div>© 2026 Acme Inc.</div>
+            <div>Built with containers.</div>
+          </div>
+        </Container>
+      </footer>
     </ContainerProvider>
   );
 }
@@ -437,105 +578,118 @@ function VariantPicker() {
   const { variant, setVariant } = useContainer();
   const [openInfo, setOpenInfo] = useState<ContainerVariant | null>(null);
   return (
-    <div className="py-3 overflow-x-auto px-4">
-      <div className="flex justify-center items-center gap-2 w-full min-w-max">
-        <WindowSize />
-        <span className="mx-2 h-5 w-px bg-zinc-700" />
-        <BaseSizePicker />
-        <span className="mx-2 h-5 w-px bg-zinc-700" />
-        {VARIANTS.map((v) => {
-          const active = variant === v.id;
-          return (
-            <ButtonGroup key={v.id}>
-              <Button
-                type="button"
-                size="sm"
-                variant={active ? "default" : "outline"}
-                onClick={() => setVariant(v.id)}
-              >
-                {v.label}
-              </Button>
-              <Button
-                type="button"
-                size="icon-sm"
-                variant={active ? "default" : "outline"}
-                aria-label={`About ${v.label}`}
-                onClick={() => setOpenInfo(v.id)}
-              >
-                i
-              </Button>
-            </ButtonGroup>
-          );
-        })}
-        {VARIANTS.map((v) => {
-          const info = VARIANT_EXAMPLES[v.id];
-          return (
-            <Sheet
-              key={v.id}
-              open={openInfo === v.id}
-              onOpenChange={(o) => setOpenInfo(o ? v.id : null)}
-            >
-              <SheetContent className="w-full sm:!max-w-2xl">
-                <SheetHeader>
-                  <SheetTitle>{v.label}</SheetTitle>
-                </SheetHeader>
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6 space-y-6">
-                  <p className="text-d-sm text-zinc-200 leading-relaxed">
-                    {info.description}
-                  </p>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div>
-                      <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-emerald-500">
-                        Pros
-                      </div>
-                      <ul className="space-y-1 text-d-sm text-zinc-200">
-                        {info.pros.map((p, i) => (
-                          <PointItem key={i} point={p} tone="pro" />
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-red-500">
-                        Cons
-                      </div>
-                      <ul className="space-y-1 text-d-sm text-zinc-200">
-                        {info.cons.map((c, i) => (
-                          <PointItem key={i} point={c} tone="con" />
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-zinc-500">
-                      Examples in the wild
-                    </div>
-                    <ul className="space-y-3">
-                      {info.sites.map((s) => (
-                        <li
-                          key={s.url}
-                          className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                        >
-                          <a
-                            href={s.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-d-sm font-medium underline"
-                          >
-                            {s.name}
-                          </a>
-                          <p className="mt-1 text-d-xs text-zinc-600 dark:text-zinc-400">
-                            {s.note}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          );
-        })}
+    <div className="container-constrained flex gap-x-6 justify-between h-14 items-center">
+      <div className="flex items-center justify-center h-full aspect-square bg-primary relative">
+        <Image
+          src="/iso-framed.svg"
+          className="size-12"
+          width={48}
+          height={48}
+          alt="joyco iso"
+        />
       </div>
+      <ScrollAreaViewport orientation="horizontal">
+        <ScrollAreaContent>
+          <div className="flex justify-center py-3 items-center gap-2 w-max">
+            <WindowSize />
+            <span className="mx-2 h-5 w-px bg-zinc-700" />
+            <BaseSizePicker />
+            <span className="mx-2 h-5 w-px bg-zinc-700" />
+            {VARIANTS.map((v) => {
+              const active = variant === v.id;
+              return (
+                <ButtonGroup key={v.id}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={active ? "default" : "outline"}
+                    onClick={() => setVariant(v.id)}
+                  >
+                    {v.label}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant={active ? "default" : "outline"}
+                    aria-label={`About ${v.label}`}
+                    onClick={() => setOpenInfo(v.id)}
+                  >
+                    i
+                  </Button>
+                </ButtonGroup>
+              );
+            })}
+            {VARIANTS.map((v) => {
+              const info = VARIANT_EXAMPLES[v.id];
+              return (
+                <Sheet
+                  key={v.id}
+                  open={openInfo === v.id}
+                  onOpenChange={(o) => setOpenInfo(o ? v.id : null)}
+                >
+                  <SheetContent className="w-full sm:!max-w-2xl">
+                    <SheetHeader>
+                      <SheetTitle>{v.label}</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6 space-y-6">
+                      <p className="text-d-sm text-zinc-200 leading-relaxed">
+                        {info.description}
+                      </p>
+                      <div className="grid grid-cols-1 gap-6">
+                        <div>
+                          <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-emerald-500">
+                            Pros
+                          </div>
+                          <ul className="space-y-1 text-d-sm text-zinc-200">
+                            {info.pros.map((p, i) => (
+                              <PointItem key={i} point={p} tone="pro" />
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-red-500">
+                            Cons
+                          </div>
+                          <ul className="space-y-1 text-d-sm text-zinc-200">
+                            {info.cons.map((c, i) => (
+                              <PointItem key={i} point={c} tone="con" />
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="mb-2 text-d-xs font-semibold uppercase tracking-wider text-zinc-500">
+                          Examples in the wild
+                        </div>
+                        <ul className="space-y-3">
+                          {info.sites.map((s) => (
+                            <li
+                              key={s.url}
+                              className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                            >
+                              <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-d-sm font-medium underline"
+                              >
+                                {s.name}
+                              </a>
+                              <p className="mt-1 text-d-xs text-zinc-600 dark:text-zinc-400">
+                                {s.note}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              );
+            })}
+          </div>
+        </ScrollAreaContent>
+      </ScrollAreaViewport>
     </div>
   );
 }
@@ -552,18 +706,31 @@ function HeroCopy() {
       </p>
       <div className="mt-6 flex gap-3">
         <Button size="lg">Get started</Button>
-        <Button size="lg" variant="outline">Learn more</Button>
+        <Button size="lg" variant="outline">
+          Learn more
+        </Button>
       </div>
     </div>
   );
 }
 
 const BASE_SIZES = [12, 14, 16, 18, 20] as const;
-type ScaleMode = "all" | "text";
+const SCALE_MODES = ["all", "text"] as const;
+type ScaleMode = (typeof SCALE_MODES)[number];
 
 function BaseSizePicker() {
-  const [size, setSize] = useState<number>(16);
-  const [mode, setMode] = useState<ScaleMode>("text");
+  const [size, setSize] = useQueryState(
+    "size",
+    parseAsInteger
+      .withDefault(16)
+      .withOptions({ history: "replace", shallow: true }),
+  );
+  const [mode, setMode] = useQueryState(
+    "mode",
+    parseAsStringLiteral(SCALE_MODES)
+      .withDefault("text")
+      .withOptions({ history: "replace", shallow: true }),
+  );
   useEffect(() => {
     const html = document.documentElement;
     if (mode === "all") {
@@ -587,7 +754,7 @@ function BaseSizePicker() {
             type="button"
             size="sm"
             variant={mode === m ? "default" : "outline"}
-            onClick={() => setMode(m)}
+            onClick={() => void setMode(m)}
           >
             {m === "all" ? "All" : "Text"}
           </Button>
@@ -600,7 +767,7 @@ function BaseSizePicker() {
             type="button"
             size="sm"
             variant={size === s ? "default" : "outline"}
-            onClick={() => setSize(s)}
+            onClick={() => void setSize(s)}
           >
             {s}
           </Button>
@@ -657,7 +824,7 @@ function ZigzagRow({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-b border-dashed border-zinc-300 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-950">
+    <section className="border-b border-dashed border-zinc-300 py-16 dark:border-zinc-800">
       <Container>
         <div
           className={`flex flex-col items-center gap-10 lg:flex-row lg:gap-16 ${
@@ -697,6 +864,74 @@ function ZigzagContent({
   );
 }
 
+function TogetherCard({
+  title,
+  description,
+  linkLabel,
+  linkHref,
+}: {
+  title: string;
+  description: string;
+  linkLabel: string;
+  linkHref: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="aspect-[16/10] w-full rounded-xl border border-border bg-muted" />
+      <div className="mt-6">
+        <p className="text-d-base leading-relaxed text-zinc-900 dark:text-zinc-100">
+          <span className="font-semibold">{title}</span>{" "}
+          <span className="text-zinc-600 dark:text-zinc-400">
+            {description}
+          </span>
+        </p>
+        <a
+          href={linkHref}
+          className="mt-6 inline-flex items-center gap-1 text-d-sm font-medium text-zinc-900 underline underline-offset-4 dark:text-zinc-100"
+        >
+          {linkLabel}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function PricingCard({ tier }: { tier: PricingTier }) {
+  return (
+    <div
+      className={`flex flex-col border-zinc-200 bg-card dark:border-zinc-800 rounded-xl border p-8`}
+    >
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-d-xl font-semibold">{tier.name}</h3>
+      </div>
+      <p className={`mt-2 text-d-sm text-zinc-600 dark:text-zinc-400`}>
+        {tier.description}
+      </p>
+      <div className="mt-6 flex items-baseline gap-2">
+        <span className="text-d-4xl font-semibold tracking-tight">
+          {tier.price}
+        </span>
+        <span className={`text-d-sm text-zinc-600 dark:text-zinc-400`}>
+          {tier.period}
+        </span>
+      </div>
+      <ul className="mt-6 flex-1 space-y-3">
+        {tier.features.map((feature) => (
+          <li key={feature} className="flex gap-2 text-d-sm">
+            <span className="text-emerald-500">✓</span>
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8">
+        <Button size="lg" className="w-full">
+          {tier.cta}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function WindowSize() {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
@@ -707,7 +942,7 @@ function WindowSize() {
     return () => window.removeEventListener("resize", update);
   }, []);
   return (
-    <code className="rounded bg-zinc-100 px-2 py-1 font-mono text-d-xs tabular-nums dark:bg-zinc-900">
+    <code className="rounded whitespace-nowrap h-8 flex items-center border border-input bg-input/30 px-2 py-1 font-mono text-d-xs tabular-nums">
       {size ? `w: ${size.w} × h: ${size.h}` : "— × —"}
     </code>
   );
