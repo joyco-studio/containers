@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 
@@ -246,6 +246,118 @@ function drawOverlays(
   ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
 }
 
+/* -----------------------------------------------------------------------
+ * Panel UI — small composable pieces, no repeated markup
+ * --------------------------------------------------------------------- */
+
+function Row({ label, value, color = "text-zinc-400" }: { label: string; value: string; color?: string }) {
+  return (
+    <span>
+      <span className={color}>{label}: </span>
+      {value}
+    </span>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div data-slot="section" className="flex flex-col gap-0.5 [[data-slot=section]+&]:mt-2 [[data-slot=section]+&]:pt-2 [[data-slot=section]+&]:border-t [[data-slot=section]+&]:border-zinc-700/60">
+      {title && (
+        <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
+          {title}
+        </span>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function GapRows({ info }: { info: InspectInfo }) {
+  const hasGap = info.gap !== "normal" && info.gap !== "0px";
+  if (!hasGap) return null;
+
+  if (info.rowGap === info.columnGap) {
+    return <Row label="gap" value={formatVal(info.gap)} color="text-purple-400/80" />;
+  }
+
+  return (
+    <>
+      <Row label="row-gap" value={formatVal(info.rowGap)} color="text-purple-400/80" />
+      <Row label="column-gap" value={formatVal(info.columnGap)} color="text-purple-400/80" />
+    </>
+  );
+}
+
+const InspectorPanel = forwardRef<HTMLDivElement, { style: { top: number; left: number }; info: InspectInfo; pinned: boolean }>(
+  ({ style, info, pinned }, ref) => {
+    const hasMargin = info.marginTop || info.marginRight || info.marginBottom || info.marginLeft;
+    const hasPadding = info.paddingTop || info.paddingRight || info.paddingBottom || info.paddingLeft;
+    const isFlexOrGrid = info.display.includes("flex") || info.display.includes("grid");
+
+    return (
+      <div
+        ref={ref}
+        data-inspector
+        style={style}
+        className="fixed z-[10000] pointer-events-none w-56 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-mono text-zinc-100 shadow-lg"
+      >
+        {pinned && (
+          <div className="mb-1.5 pb-1.5 font-semibold border-b border-zinc-700/60 flex items-center gap-2 text-[10px] uppercase tracking-wider text-foreground">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Esc to unpin
+          </div>
+        )}
+
+        <Section title="Font">
+          <Row label="family" value={info.family} />
+          <Row label="size" value={formatVal(info.size)} />
+          <Row label="weight" value={info.weight} />
+          <Row label="line-height" value={formatVal(info.lineHeight)} />
+          <Row label="letter-spacing" value={formatVal(info.letterSpacing)} />
+        </Section>
+
+        {(hasPadding || hasMargin) && (
+          <Section title="Spacing">
+            {hasPadding ? (
+              <Row
+                label="padding"
+                value={`${formatPx(info.paddingTop)} ${formatPx(info.paddingRight)} ${formatPx(info.paddingBottom)} ${formatPx(info.paddingLeft)}`}
+                color="text-green-400/80"
+              />
+            ) : null}
+            {hasMargin ? (
+              <Row
+                label="margin"
+                value={`${formatPx(info.marginTop)} ${formatPx(info.marginRight)} ${formatPx(info.marginBottom)} ${formatPx(info.marginLeft)}`}
+                color="text-orange-400/80"
+              />
+            ) : null}
+          </Section>
+        )}
+
+        {isFlexOrGrid && (
+          <Section title="Layout">
+            <Row label="display" value={info.display} color="text-purple-400/80" />
+            <GapRows info={info} />
+          </Section>
+        )}
+
+        <Section title="">
+          <Row label="size" value={`${Math.round(info.rect.width)} x ${Math.round(info.rect.height)}`} color="text-blue-400/80" />
+        </Section>
+      </div>
+    );
+  },
+);
+InspectorPanel.displayName = "InspectorPanel";
+
+/* -----------------------------------------------------------------------
+ * Inspector — main controller
+ * --------------------------------------------------------------------- */
+
 export function Inspector() {
   const [active, setActive] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -256,6 +368,18 @@ export function Inspector() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  // --- Global "I" shortcut to toggle inspector ---
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (e.key === "i" || e.key === "I") {
+        setActive((a) => !a);
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKey);
+    return () => document.removeEventListener("keydown", handleGlobalKey);
+  }, []);
 
   // --- Refresh pinned element info ---
   const refreshPinned = useCallback(() => {
@@ -418,9 +542,9 @@ export function Inspector() {
       return;
     }
 
-    // No room on either side — place over the element, centered horizontally
-    const overLeft = Math.max(gap, Math.min(rect.left + (rect.width - tw) / 2, vw - tw - gap));
-    const overTop = Math.max(gap, Math.min(rect.top + (rect.height - th) / 2, vh - th - gap));
+    // No room on either side — place inside the element, pinned to top-right
+    const overLeft = Math.max(gap, Math.min(rect.right - tw - gap, vw - tw - gap));
+    const overTop = Math.max(gap, Math.min(rect.top + gap, vh - th - gap));
     setTooltipPos({ top: overTop, left: overLeft });
   }, [info]);
 
@@ -461,111 +585,12 @@ export function Inspector() {
             />
 
             {active && info && visible && (
-              <div
+              <InspectorPanel
                 ref={tooltipRef}
-                data-inspector
                 style={tooltipPos}
-                className="fixed z-[10000] pointer-events-none w-56 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-mono text-zinc-100 shadow-lg"
-              >
-                {pinned && (
-                  <div className="mb-1.5 pb-1.5 font-semibold border-b border-zinc-700/60 flex items-center gap-2 text-[10px] uppercase tracking-wider text-foreground">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Esc to unpin
-                  </div>
-                )}
-
-                {/* Font section */}
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
-                    Font
-                  </span>
-                  <span>
-                    <span className="text-zinc-400">family: </span>
-                    {info.family}
-                  </span>
-                  <span>
-                    <span className="text-zinc-400">size: </span>
-                    {formatVal(info.size)}
-                  </span>
-                  <span>
-                    <span className="text-zinc-400">weight: </span>
-                    {info.weight}
-                  </span>
-                  <span>
-                    <span className="text-zinc-400">line-height: </span>
-                    {formatVal(info.lineHeight)}
-                  </span>
-                  <span>
-                    <span className="text-zinc-400">letter-spacing: </span>
-                    {formatVal(info.letterSpacing)}
-                  </span>
-                </div>
-
-                {/* Spacing section */}
-                {(hasPadding || hasMargin) && (
-                  <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-zinc-700/60">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
-                      Spacing
-                    </span>
-                    {hasPadding && (
-                      <span>
-                        <span className="text-green-400/80">padding: </span>
-                        {formatPx(info.paddingTop)} {formatPx(info.paddingRight)}{" "}
-                        {formatPx(info.paddingBottom)} {formatPx(info.paddingLeft)}
-                      </span>
-                    )}
-                    {hasMargin && (
-                      <span>
-                        <span className="text-orange-400/80">margin: </span>
-                        {formatPx(info.marginTop)} {formatPx(info.marginRight)}{" "}
-                        {formatPx(info.marginBottom)} {formatPx(info.marginLeft)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Layout section */}
-                {isFlexOrGrid && (
-                  <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-zinc-700/60">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
-                      Layout
-                    </span>
-                    <span>
-                      <span className="text-purple-400/80">display: </span>
-                      {info.display}
-                    </span>
-                    {info.gap !== "normal" && info.gap !== "0px" && info.rowGap === info.columnGap && (
-                      <span>
-                        <span className="text-purple-400/80">gap: </span>
-                        {formatVal(info.gap)}
-                      </span>
-                    )}
-                    {info.gap !== "normal" && info.gap !== "0px" && info.rowGap !== info.columnGap && (
-                      <>
-                        <span>
-                          <span className="text-purple-400/80">row-gap: </span>
-                          {formatVal(info.rowGap)}
-                        </span>
-                        <span>
-                          <span className="text-purple-400/80">column-gap: </span>
-                          {formatVal(info.columnGap)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Box size */}
-                <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-zinc-700/60">
-                  <span>
-                    <span className="text-blue-400/80">size: </span>
-                    {Math.round(info.rect.width)} x {Math.round(info.rect.height)}
-                  </span>
-                </div>
-              </div>
+                info={info}
+                pinned={pinned}
+              />
             )}
           </>,
           document.body,
