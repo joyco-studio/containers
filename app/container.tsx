@@ -16,7 +16,6 @@ export const VARIANTS = [
   { id: "container-padded-max-w", label: "Padded Max Width" },
   { id: "container-critical-breakpoint", label: "Critical Breakpoint" },
   { id: "container-grid", label: "Grid" },
-  { id: "container-responsive", label: "Emulated Grid" },
 ] as const;
 
 export type ContainerVariant = (typeof VARIANTS)[number]["id"];

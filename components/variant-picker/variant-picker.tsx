@@ -15,6 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -199,46 +206,52 @@ function BaseSizePicker() {
   }, [size, mode, baseViewport]);
   return (
     <>
-      <ButtonGroup>
-        {SCALE_MODES.map((m) => (
-          <Button
-            key={m}
-            type="button"
-            size="sm"
-            variant={mode === m ? "default" : "outline"}
-            onClick={() => void setMode(m)}
-          >
-            {MODE_LABELS[m]}
-          </Button>
-        ))}
-      </ButtonGroup>
-      <ButtonGroup>
-        {BASE_SIZES.map((s) => (
-          <Button
-            key={s}
-            type="button"
-            size="sm"
-            variant={size === s ? "default" : "outline"}
-            onClick={() => void setSize(s)}
-          >
-            {s}
-          </Button>
-        ))}
-      </ButtonGroup>
-      {mode === "scalable" && (
-        <ButtonGroup>
-          {BASE_VIEWPORTS.map((v) => (
-            <Button
-              key={v}
-              type="button"
-              size="sm"
-              variant={baseViewport === v ? "default" : "outline"}
-              onClick={() => void setBaseViewport(v)}
-            >
-              {v}
-            </Button>
+      <Select
+        value={mode}
+        onValueChange={(v) => void setMode(v as typeof mode)}
+      >
+        <SelectTrigger size="sm">
+          <span className="text-muted-foreground">Scale:</span> <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {SCALE_MODES.map((m) => (
+            <SelectItem key={m} value={m}>
+              {MODE_LABELS[m]}
+            </SelectItem>
           ))}
-        </ButtonGroup>
+        </SelectContent>
+      </Select>
+      <Select
+        value={String(size)}
+        onValueChange={(v) => void setSize(Number(v))}
+      >
+        <SelectTrigger size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {BASE_SIZES.map((s) => (
+            <SelectItem key={s} value={String(s)}>
+              {s}px
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {mode === "scalable" && (
+        <Select
+          value={String(baseViewport)}
+          onValueChange={(v) => void setBaseViewport(Number(v))}
+        >
+          <SelectTrigger size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {BASE_VIEWPORTS.map((v) => (
+              <SelectItem key={v} value={String(v)}>
+                {v}px
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
     </>
   );
