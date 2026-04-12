@@ -31,7 +31,7 @@ export function Together() {
         <h2 className="max-w-2xl text-d-3xl font-semibold tracking-tight sm:text-d-4xl">
           One platform, every team, zero drift
         </h2>
-        <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-8">
+        <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-(--grid-gap)">
           {ITEMS.map((item) => (
             <TogetherCard key={item.title} {...item} />
           ))}
