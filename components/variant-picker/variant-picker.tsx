@@ -36,6 +36,7 @@ import {
   ScrollAreaViewport,
   ScrollAreaContent,
 } from "@/components/scroll-area";
+import { Inspector } from "@/components/inspector";
 import {
   BASE_SIZES,
   BASE_VIEWPORTS,
@@ -91,6 +92,8 @@ export function VariantPicker() {
                 </ButtonGroup>
               );
             })}
+            <span className="mx-2 h-5 w-px bg-zinc-700" />
+            <Inspector />
             {VARIANTS.map((v) => {
               const info = VARIANT_EXAMPLES[v.id];
               return (
