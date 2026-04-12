@@ -50,7 +50,7 @@ export function VariantPicker() {
   const { variant, setVariant } = useContainer();
   const [openInfo, setOpenInfo] = useState<ContainerVariant | null>(null);
   return (
-    <div className="container-max-w flex gap-x-6 justify-between h-14 items-center">
+    <div className="max-w-[calc(var(--max-width)-var(--sides)*2)] mx-auto flex gap-x-6 justify-between h-14 items-center">
       <div className="flex items-center justify-center h-full aspect-square bg-primary relative">
         <Image
           src="/iso-framed.svg"
