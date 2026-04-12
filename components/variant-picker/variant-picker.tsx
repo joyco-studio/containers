@@ -309,8 +309,13 @@ function WindowSize() {
     return () => window.removeEventListener("resize", update);
   }, []);
   return (
-    <code className="rounded whitespace-nowrap h-8 flex items-center border border-input bg-input/30 px-2 py-1 font-mono text-d-xs tabular-nums">
-      {size ? `w: ${size.w} × h: ${size.h}` : "— × —"}
+    <code className="rounded whitespace-nowrap h-8 flex items-center gap-1.5 border border-input bg-input/30 px-2 py-1 font-mono text-d-xs tabular-nums">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+      {size ? `${size.w} × ${size.h}` : "— × —"}
     </code>
   );
 }
