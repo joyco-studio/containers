@@ -119,7 +119,7 @@ export function Slider() {
               <div
                 key={slide.title}
                 /* 3 columns of cards perfectly fitting in the container */
-                className="shrink-0 grow-0 basis-[calc((100%-2*var(--grid-gap))/3)]"
+                className="shrink-0 grow-0 basis-[calc(100%-2*var(--grid-gap))] sm:basis-[calc((100%-2*var(--grid-gap))/2)] lg:basis-[calc((100%-2*var(--grid-gap))/3)]"
               >
                 <TogetherCard {...slide} />
               </div>
