@@ -45,20 +45,29 @@ function formatVal(value: string): string {
   });
 }
 
-function createHatchPattern(ctx: CanvasRenderingContext2D, color: string): CanvasPattern | null {
-  const size = 6;
+function createHatchPattern(ctx: CanvasRenderingContext2D, color: string, dpr: number): CanvasPattern | null {
+  const logical = 6;
+  const physical = logical * dpr;
   const off = document.createElement("canvas");
-  off.width = size;
-  off.height = size;
+  off.width = physical;
+  off.height = physical;
   const offCtx = off.getContext("2d");
   if (!offCtx) return null;
+  offCtx.scale(dpr, dpr);
   offCtx.strokeStyle = color;
   offCtx.lineWidth = 1;
   offCtx.beginPath();
-  offCtx.moveTo(0, size);
-  offCtx.lineTo(size, 0);
+  offCtx.moveTo(0, logical);
+  offCtx.lineTo(logical, 0);
   offCtx.stroke();
-  return ctx.createPattern(off, "repeat");
+  const pattern = ctx.createPattern(off, "repeat");
+  if (pattern) {
+    // Scale the pattern down so it tiles at logical pixel size
+    const mat = new DOMMatrix();
+    mat.scaleSelf(1 / dpr, 1 / dpr);
+    pattern.setTransform(mat);
+  }
+  return pattern;
 }
 
 function computeGapRects(
@@ -228,7 +237,7 @@ function drawOverlays(
       ctx.fillStyle = "rgba(192, 132, 252, 0.2)";
       for (const gr of gapRects) ctx.fillRect(gr.x, gr.y, gr.width, gr.height);
 
-      const pattern = createHatchPattern(ctx, "rgba(192, 132, 252, 0.45)");
+      const pattern = createHatchPattern(ctx, "rgba(192, 132, 252, 0.45)", dpr);
       if (pattern) {
         ctx.fillStyle = pattern;
         for (const gr of gapRects) ctx.fillRect(gr.x, gr.y, gr.width, gr.height);
@@ -434,12 +443,17 @@ export function Inspector() {
     const ro = new ResizeObserver(refreshPinned);
     ro.observe(pinnedElRef.current);
 
-    window.addEventListener("resize", refreshPinned);
+    const handleResize = () => {
+      pinnedElRef.current?.scrollIntoView({ block: "center", inline: "center" });
+      refreshPinned();
+    };
+
+    window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", refreshPinned, true);
 
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", refreshPinned);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", refreshPinned, true);
     };
   }, [pinned, refreshPinned]);
